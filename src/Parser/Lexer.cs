@@ -52,9 +52,7 @@ public sealed class Lexer(string source, bool debug) {
             if (IsEnd()) break;
 
             var result = ParseToken();
-            if (!result.IsSuccess) {
-                return Error(result.Error!);
-            }
+            if (!result.IsSuccess) return Result<List<Token>>.Err();
 
             Tokens.Add(result.Value!);
             Current++;
@@ -129,9 +127,8 @@ public sealed class Lexer(string source, bool debug) {
         while (!IsEnd() && IsNumChar(Source[Current])) {
             if (Source[Current] == '.') {
                 if (hasDecimal) {
-                    // Current is incremented here as it places the error arrow (^) in the correct position
                     Current++;
-                    return Result<Token>.Err("Syntax Error: invalid numeric literal");
+                    return SyntaxError("invalid numeric literal");
                 }
 
                 hasDecimal = true;
@@ -142,7 +139,7 @@ public sealed class Lexer(string source, bool debug) {
 
         var lexeme = Source[start..Current];
         if (lexeme[^1] == '.') {
-            return Result<Token>.Err("Syntax Error: invalid numeric literal");
+            return SyntaxError("invalid numeric literal");
         }
 
         if (hasDecimal) {
@@ -162,11 +159,11 @@ public sealed class Lexer(string source, bool debug) {
 
         var lexeme = Source[start..(Current + (IsEnd() ? 0 : 1))];
         if (lexeme[^1] != '\'') {
-            return Result<Token>.Err("Syntax Error: unterminated char literal");
+            return SyntaxError("Syntax Error: unterminated char literal");
         }
 
         if (lexeme == "\'\'") {
-            return Result<Token>.Err("Syntax Error: empty char literal");
+            return SyntaxError("Syntax Error: empty char literal");
         }
 
         return Result<Token>.Ok(NewToken(TokenType.Char, lexeme));
@@ -182,13 +179,13 @@ public sealed class Lexer(string source, bool debug) {
         var lexeme = Source[start..(Current + (IsEnd() ? 0 : 1))];
 
         if (lexeme[^1] != '\"') {
-            return Result<Token>.Err("Syntax Error: unterminated string literal");
+            return SyntaxError("Syntax Error: unterminated string literal");
         }
 
         return Result<Token>.Ok(NewToken(TokenType.String, lexeme));
     }
 
-    private Result<List<Token>> Error(string message) {
+    private Result<Token> SyntaxError(string message) {
         var line = GetCurrentLine();
         var idx = Source.IndexOf(line);
 
@@ -197,7 +194,7 @@ public sealed class Lexer(string source, bool debug) {
 
         Console.WriteLine($"{message} on line {CurrentLine}");
 
-        return Result<List<Token>>.Err(message);
+        return Result<Token>.Err();
     }
 
     private string GetCurrentLine() {

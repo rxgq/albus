@@ -23,6 +23,10 @@ internal class Program
         var interpreter = new Interpreter(astResult.Value!);
         var programResult = interpreter.InterpretProgram();
 
-        Console.Write(programResult.Value.ToString());
+        if (programResult.IsSuccess) {
+            Console.WriteLine(programResult.Value!.ToString());
+        }
+
+        
     }
 }

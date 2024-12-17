@@ -13,7 +13,7 @@ public class Parser(List<Token> tokens, bool isDebug)
             var result = ParseStatement();
             
             if (!result.IsSuccess) {
-                return Result<List<Expression>>.Err(result.Error!);
+                return Result<List<Expression>>.Err();
             }
 
             Expressions.Add(result.Value!);
@@ -41,7 +41,7 @@ public class Parser(List<Token> tokens, bool isDebug)
         while (Check(TokenType.DoubleEquals) || Check(TokenType.NotEquals)) {
             var op = Tokens[Current - 1];
             var right = ParseComparison();
-            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!, op.Line));
         }
 
         return left;
@@ -54,7 +54,7 @@ public class Parser(List<Token> tokens, bool isDebug)
                 Check(TokenType.GreaterThanEquals) || Check(TokenType.LessThanEquals)) {
             var op = Tokens[Current - 1];
             var right = ParseTerm();
-            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!, op.Line));
         }
 
         return left;
@@ -66,7 +66,7 @@ public class Parser(List<Token> tokens, bool isDebug)
         while (Check(TokenType.Plus) || Check(TokenType.Minus)) {
             var op = Tokens[Current - 1];
             var right = ParseFactor();
-            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!, op.Line));
         }
 
         return left;
@@ -79,7 +79,7 @@ public class Parser(List<Token> tokens, bool isDebug)
             var op = Tokens[Current - 1];
             var right = ParseUnary();
 
-            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!, op.Line));
             
             if (ContainsDivisionByZero(left.Value!)) {
                 return SyntaxError("cannot divide by 0");
@@ -93,7 +93,7 @@ public class Parser(List<Token> tokens, bool isDebug)
         if (Check(TokenType.Exclamation) ) {
             var op = Tokens[Current - 1];
             var right = ParseUnary();
-            return Result<Expression>.Ok(new UnaryExpression(op, right.Value!));
+            return Result<Expression>.Ok(new UnaryExpression(op, right.Value!, op.Line));
         }
 
         return ParsePrimary();
@@ -118,22 +118,24 @@ public class Parser(List<Token> tokens, bool isDebug)
         if (!hasSemiColon) return SyntaxError("expected ;");
 
         Current--;
-        return Result<Expression>.Ok(new VariableDeclaration(identifier.Lexeme, mutable, primaryResult.Value!));
+        return Result<Expression>.Ok(new VariableDeclaration(identifier.Lexeme, mutable, primaryResult.Value!, identifier.Line));
     }
 
     private Result<Expression> ParsePrimary() {
-        Expression? expr = Tokens[Current].Type switch {
-            TokenType.String => new LiteralExpression(Tokens[Current].Lexeme),
-            TokenType.Integer => new LiteralExpression(int.Parse(Tokens[Current].Lexeme)),
-            TokenType.Float => new LiteralExpression(Tokens[Current].Lexeme),
-            TokenType.True => new LiteralExpression(Tokens[Current].Lexeme),
-            TokenType.False => new LiteralExpression(Tokens[Current].Lexeme),
+        var token = Tokens[Current];
+
+        var expr = token.Type switch {
+            TokenType.String  => new LiteralExpression(Tokens[Current].Lexeme, token.Line),
+            TokenType.Integer => new LiteralExpression(int.Parse(Tokens[Current].Lexeme), token.Line),
+            TokenType.Float   => new LiteralExpression(double.Parse(Tokens[Current].Lexeme), token.Line),
+            TokenType.True    => new LiteralExpression(bool.Parse(Tokens[Current].Lexeme), token.Line),
+            TokenType.False   => new LiteralExpression(bool.Parse(Tokens[Current].Lexeme), token.Line),
             _ => null
         };
 
         Current++;
 
-        if (expr is null) return Result<Expression>.Err("Syntax Error: Unknown token");
+        if (expr is null) return SyntaxError("unknown token");
         return Result<Expression>.Ok(expr);
     }
 
@@ -189,7 +191,7 @@ public class Parser(List<Token> tokens, bool isDebug)
         Console.Write("\n" + new string(' ', len + offset) + "^");
         Console.WriteLine($"\n\nSyntax Error: \'{expected}\' on line {line}");
 
-        return Result<Expression>.Err("");
+        return Result<Expression>.Err();
     }
 
     private bool ContainsDivisionByZero(Expression expr) {
