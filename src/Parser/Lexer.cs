@@ -7,7 +7,7 @@ public sealed class Lexer(string source) {
 
     private readonly List<Token> Tokens = [];
 
-    private readonly Dictionary<string, TokenType> Keywords = new() {
+    private static readonly Dictionary<string, TokenType> Keywords = new() {
         ["mut"] = TokenType.Mut,
         ["let"] = TokenType.Let,
         ["while"] = TokenType.While,
@@ -39,22 +39,24 @@ public sealed class Lexer(string source) {
 
     public Result<List<Token>> Tokenize() {
         while (!IsEnd()) {
-            while (!IsEnd() && (Source[Current] == ' ' || Source[Current] == '\n')) {
+            while (!IsEnd() && (Source[Current] == ' ' || Source[Current] == '\n' || Source[Current] == '\r')) {
                 if (Source[Current] == '\n') CurrentLine++;
                 Current++;
             }
             if (IsEnd()) break;
 
             var result = ParseToken();
-            if (result.Error is not null) {
-                return Error(result.Error);
+            if (!result.IsSuccess) {
+                return Error(result.Error!);
             }
 
             Tokens.Add(result.Value!);
             Current++;
         }
 
-        Tokens.Add(new Token(TokenType.Eof, ""));
+        // LexerDebug();
+
+        Tokens.Add(NewToken(TokenType.Eof, ""));
         return Result<List<Token>>.Ok(Tokens);
     }
 
@@ -68,28 +70,32 @@ public sealed class Lexer(string source) {
             '\''                    => ParseCharLiteral(),
             _                       => ParseShortToken()
         };
-    } 
+    }
 
     private Result<Token> ParseShortToken() {
         char c = Source[Current];
         
         foreach (var token in DoubleTokens) {
             if (!token.Key.StartsWith(c)) continue;
-
-            var nextChar = Source[Current + 1];
+            
+            Current++;
+            if (IsEnd()) break;
+            var nextChar = Source[Current];
 
             var doubleToken = new string([c, nextChar]);
             if (DoubleTokens.TryGetValue(doubleToken, out var doubleType)) {
                 Current++;
-                return Result<Token>.Ok(new Token(doubleType, doubleToken));
+                return Result<Token>.Ok(NewToken(doubleType, doubleToken));
             }
+
+            Current--;
         }
 
         if (SingleTokens.TryGetValue(c, out var type)) {
-            return Result<Token>.Ok(new Token(type, c));
+            return Result<Token>.Ok(NewToken(type, c.ToString()));
         }
 
-        return Result<Token>.Ok(new Token(TokenType.BadToken, ""));
+        return Result<Token>.Ok(NewToken(TokenType.BadToken, ""));
     }
 
     private Result<Token> ParseIdentifier() {
@@ -101,10 +107,10 @@ public sealed class Lexer(string source) {
         var lexeme = Source[start..Current];
 
         if (Keywords.TryGetValue(lexeme, out var type)) {
-            return Result<Token>.Ok(new Token(type, lexeme));
+            return Result<Token>.Ok(NewToken(type, lexeme));
         }
 
-        return Result<Token>.Ok(new Token(TokenType.Identifier, lexeme));
+        return Result<Token>.Ok(NewToken(TokenType.Identifier, lexeme));
     }
 
     private Result<Token> ParseNumeric() {
@@ -134,10 +140,11 @@ public sealed class Lexer(string source) {
         }
 
         if (hasDecimal) {
-            return Result<Token>.Ok(new Token(TokenType.Float, lexeme));
+            return Result<Token>.Ok(NewToken(TokenType.Float, lexeme));
         }
 
-        return Result<Token>.Ok(new Token(TokenType.Integer, lexeme));
+        Current--;
+        return Result<Token>.Ok(NewToken(TokenType.Integer, lexeme));
     }
 
     private Result<Token> ParseCharLiteral() {
@@ -156,7 +163,7 @@ public sealed class Lexer(string source) {
             return Result<Token>.Err("Syntax Error: empty char literal");
         }
 
-        return Result<Token>.Ok(new Token(TokenType.Char, lexeme));
+        return Result<Token>.Ok(NewToken(TokenType.Char, lexeme));
     }
 
     private Result<Token> ParseString() {
@@ -172,7 +179,7 @@ public sealed class Lexer(string source) {
             return Result<Token>.Err("Syntax Error: unterminated string literal");
         }
 
-        return Result<Token>.Ok(new Token(TokenType.String, lexeme));
+        return Result<Token>.Ok(NewToken(TokenType.String, lexeme));
     }
 
     private Result<List<Token>> Error(string message) {
@@ -199,6 +206,18 @@ public sealed class Lexer(string source) {
             return Source[lineIdx..];
 
         return Source[lineIdx..nextNewLineIdx];
+    }
+
+    private void LexerDebug() {
+        Console.WriteLine("\nTokens: ");
+        foreach (var token in Tokens) {
+            Console.WriteLine($"  {token}");
+        }
+        Console.WriteLine();
+    }
+
+    private Token NewToken(TokenType type, string lexeme) {
+        return new Token(type, lexeme, CurrentLine);
     }
 
     private bool IsEnd() {

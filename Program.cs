@@ -1,4 +1,5 @@
-﻿using albus.src.Parser;
+﻿using System.Runtime.CompilerServices;
+using albus.src.Parser;
 
 namespace albus;
 
@@ -10,10 +11,18 @@ internal class Program
 
         var lexer = new Lexer(source);
         var result = lexer.Tokenize();
+        if (!result.IsSuccess) return;
 
-        if (result.Error is not null) {
+        // add a dividebyzero error if x/0 is encountered while parsing
+        var parser = new Parser(result.Value!);
+        var astResult = parser.ParseAst();
+        if (!astResult.IsSuccess) {
+            Console.Write(astResult.Error);
             return;
         }
 
+        foreach (var expr in astResult.Value ?? []) {
+            Console.WriteLine(expr.ToString());
+        }
     }
 }

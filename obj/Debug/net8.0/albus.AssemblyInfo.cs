@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("albus")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1a7a63bb9dfc31914d52e31417615a541332002c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a06d347a23c1f6cf0e65903bd1846e42e732e91")]
 [assembly: System.Reflection.AssemblyProductAttribute("albus")]
 [assembly: System.Reflection.AssemblyTitleAttribute("albus")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

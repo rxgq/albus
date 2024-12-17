@@ -1,1 +1,1 @@
-let mut x = "Hello, World!";
+let mut x = 1123123213;
