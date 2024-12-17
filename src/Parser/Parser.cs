@@ -21,7 +21,6 @@ public class Parser(List<Token> tokens, bool isDebug)
         }
 
         if (IsDebug) ParserDebug();
-
         return Result<List<Expression>>.Ok(Expressions);
     }
 
@@ -79,7 +78,12 @@ public class Parser(List<Token> tokens, bool isDebug)
         while (Check(TokenType.Star) || Check(TokenType.Slash) || Check(TokenType.Modulo)) {
             var op = Tokens[Current - 1];
             var right = ParseUnary();
+
             left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+            
+            if (ContainsDivisionByZero(left.Value!)) {
+                return SyntaxError("cannot divide by 0");
+            }
         }
 
         return left;
@@ -186,6 +190,16 @@ public class Parser(List<Token> tokens, bool isDebug)
         Console.WriteLine($"\n\nSyntax Error: \'{expected}\' on line {line}");
 
         return Result<Expression>.Err("");
+    }
+
+    private bool ContainsDivisionByZero(Expression expr) {
+        if (expr is BinaryExpression binExpr) {
+            if (binExpr.Op.Type == TokenType.Slash && binExpr.Right is LiteralExpression lit && lit.Literal == 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ParserDebug() {
