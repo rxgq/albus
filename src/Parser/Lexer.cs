@@ -1,9 +1,10 @@
 namespace albus.src.Parser;
 
-public sealed class Lexer(string source) {
+public sealed class Lexer(string source, bool debug) {
     private readonly string Source = source;
     private int Current;
     private int CurrentLine = 1;
+    private readonly bool IsDebug = debug;
 
     private readonly List<Token> Tokens = [];
 
@@ -54,7 +55,7 @@ public sealed class Lexer(string source) {
             Current++;
         }
 
-        // LexerDebug();
+        if (IsDebug) LexerDebug();
 
         Tokens.Add(NewToken(TokenType.Eof, ""));
         return Result<List<Token>>.Ok(Tokens);

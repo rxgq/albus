@@ -28,7 +28,7 @@ public class Parser(List<Token> tokens)
     private Result<Expression> ParseExpression() {
         return Tokens[Current].Type switch {
             TokenType.Let => ParseVariableDeclaration(),
-            _ => Result<Expression>.Err("Syntax Error: Unknown token")
+            _ => SyntaxError($"unexpected token: {Tokens[Current].Type}")
         }; 
     }
 
@@ -39,18 +39,19 @@ public class Parser(List<Token> tokens)
         if (mutable) Current++;
 
         var identifier = Match(TokenType.Identifier);
-        if (identifier is null) return SyntaxError("identifier");
+        if (identifier is null) return SyntaxError("expected identifier");
 
         var hasEquals = Expect(TokenType.SingleEquals);
-        if (!hasEquals) return SyntaxError("=");
+        if (!hasEquals) return SyntaxError("expected =");
 
-        var result = ParsePrimary();
-        if (!result.IsSuccess) return result;
+        var primaryResult = ParsePrimary();
+        if (!primaryResult.IsSuccess) return SyntaxError("expected expression");
 
         var hasSemiColon = Expect(TokenType.SemiColon);
-        if (!hasSemiColon) return SyntaxError(";");
+        if (!hasSemiColon) return SyntaxError("expected ;");
 
-        return Result<Expression>.Ok(new VariableDeclaration(identifier.Lexeme, mutable, result.Value!));
+        Current--;
+        return Result<Expression>.Ok(new VariableDeclaration(identifier.Lexeme, mutable, primaryResult.Value!));
     }
 
     private Result<Expression> ParsePrimary() {
@@ -85,7 +86,7 @@ public class Parser(List<Token> tokens)
 
         if (Tokens[Current].Type == type) {
             Current++;
-            return Tokens[Current];
+            return Tokens[Current - 1];
         }
 
         return null;
@@ -110,8 +111,9 @@ public class Parser(List<Token> tokens)
         }
         
         Console.Write("\n" + new string(' ', len + offset) + "^");
+        Console.WriteLine($"\n\nSyntax Error: \'{expected}\' on line {line}");
 
-        return Result<Expression>.Err($"\n\nSyntax Error: expected \'{expected}\' on line {line}");
+        return Result<Expression>.Err("");
     }
 
     private bool IsEnd() {

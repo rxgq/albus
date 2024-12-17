@@ -1,6 +1,6 @@
 namespace albus.src;
 
-public sealed class Result<T> 
+public sealed class Result<T>
     where T : notnull
 {
     public readonly bool IsSuccess;
