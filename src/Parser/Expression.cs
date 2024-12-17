@@ -2,11 +2,11 @@ namespace albus.src.Parser;
 
 public abstract class Expression {}
 
-public sealed class LiteralExpression(object literal) : Expression {
-    public readonly object Literal = literal;
+public sealed class LiteralExpression(dynamic literal) : Expression {
+    public readonly dynamic Literal = literal;
 
     public override string ToString() {
-        return $"({Literal})";
+        return $"[{Literal}]";
     }
 }
 
@@ -17,5 +17,24 @@ public sealed class VariableDeclaration(string identifier, bool isMutable, Expre
 
     public override string ToString() {
         return $"{(IsMutable ? "mut" : "")}[{Identifier}] = {Value}";
+    }
+}
+
+public sealed class BinaryExpression(Expression left, Token op, Expression right) : Expression {
+    public readonly Expression Left = left;
+    public readonly Token Op = op;
+    public readonly Expression Right = right;
+
+    public override string ToString() {
+        return $"({Left} {Op.Lexeme} {Right})";
+    }
+}
+
+public sealed class UnaryExpression(Token op, Expression right) : Expression {
+    public readonly Token Op = op;
+    public readonly Expression Right = right;
+
+    public override string ToString() {
+        return $"({Op.Lexeme} {Right})";
     }
 }

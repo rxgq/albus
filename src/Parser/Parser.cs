@@ -1,35 +1,98 @@
-using System.Threading.Tasks.Dataflow;
-
 namespace albus.src.Parser;
 
-public class Parser(List<Token> tokens)
+public class Parser(List<Token> tokens, bool isDebug)
 {
     private readonly List<Token> Tokens = tokens;
     private int Current = 0;
+    private readonly bool IsDebug = isDebug;
 
     private readonly List<Expression> Expressions = []; 
 
     public Result<List<Expression>> ParseAst() {
         while (!IsEnd() && Tokens[Current].Type != TokenType.Eof) {
-            var result = ParseExpression();
+            var result = ParseStatement();
             
             if (!result.IsSuccess) {
                 return Result<List<Expression>>.Err(result.Error!);
             }
 
             Expressions.Add(result.Value!);
-
             Current++;
         }
+
+        if (IsDebug) ParserDebug();
 
         return Result<List<Expression>>.Ok(Expressions);
     }
 
-    private Result<Expression> ParseExpression() {
+    private Result<Expression> ParseStatement() {
         return Tokens[Current].Type switch {
             TokenType.Let => ParseVariableDeclaration(),
-            _ => SyntaxError($"unexpected token: {Tokens[Current].Type}")
+            _ => ParseExpression()
         }; 
+    }
+
+    private Result<Expression> ParseExpression() {
+        return ParseEquality();
+    }
+
+    private Result<Expression> ParseEquality() {
+        var left = ParseComparison();
+
+        while (Check(TokenType.DoubleEquals) || Check(TokenType.NotEquals)) {
+            var op = Tokens[Current - 1];
+            var right = ParseComparison();
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+        }
+
+        return left;
+    }
+
+    private Result<Expression> ParseComparison() {
+        var left = ParseTerm();
+
+        while (Check(TokenType.GreaterThan) || Check(TokenType.LessThan) || 
+                Check(TokenType.GreaterThanEquals) || Check(TokenType.LessThanEquals)) {
+            var op = Tokens[Current - 1];
+            var right = ParseTerm();
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+        }
+
+        return left;
+    }
+
+    private Result<Expression> ParseTerm() {
+        var left = ParseFactor();
+
+        while (Check(TokenType.Plus) || Check(TokenType.Minus)) {
+            var op = Tokens[Current - 1];
+            var right = ParseFactor();
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+        }
+
+        return left;
+    }
+
+    private Result<Expression> ParseFactor() {
+        var left = ParseUnary();
+
+        while (Check(TokenType.Star) || Check(TokenType.Slash) || Check(TokenType.Modulo)) {
+            var op = Tokens[Current - 1];
+            var right = ParseUnary();
+            left = Result<Expression>.Ok(new BinaryExpression(left.Value!, op, right.Value!));
+        }
+
+        return left;
+    }
+
+    private Result<Expression> ParseUnary() {
+        if (Check(TokenType.Exclamation) ) {
+            var op = Tokens[Current - 1];
+            var right = ParseUnary();
+            return Result<Expression>.Ok(new UnaryExpression(op, right.Value!));
+        }
+
+        return ParsePrimary();
     }
 
     private Result<Expression> ParseVariableDeclaration() {
@@ -57,7 +120,7 @@ public class Parser(List<Token> tokens)
     private Result<Expression> ParsePrimary() {
         Expression? expr = Tokens[Current].Type switch {
             TokenType.String => new LiteralExpression(Tokens[Current].Lexeme),
-            TokenType.Integer => new LiteralExpression(Tokens[Current].Lexeme),
+            TokenType.Integer => new LiteralExpression(int.Parse(Tokens[Current].Lexeme)),
             TokenType.Float => new LiteralExpression(Tokens[Current].Lexeme),
             TokenType.True => new LiteralExpression(Tokens[Current].Lexeme),
             TokenType.False => new LiteralExpression(Tokens[Current].Lexeme),
@@ -92,6 +155,15 @@ public class Parser(List<Token> tokens)
         return null;
     }
 
+    private bool Check(TokenType type) {
+        if (Tokens[Current].Type == type) {
+            Current++;
+            return true;
+        }
+
+        return false;
+    }
+
     private Result<Expression> SyntaxError(string expected) {
         var line = Tokens[Current - 1].Line;
 
@@ -114,6 +186,12 @@ public class Parser(List<Token> tokens)
         Console.WriteLine($"\n\nSyntax Error: \'{expected}\' on line {line}");
 
         return Result<Expression>.Err("");
+    }
+
+    private void ParserDebug() {
+        foreach (var expr in Expressions ?? []) {
+            Console.WriteLine(expr.ToString());
+        }
     }
 
     private bool IsEnd() {

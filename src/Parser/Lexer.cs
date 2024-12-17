@@ -31,11 +31,16 @@ public sealed class Lexer(string source, bool debug) {
         ['*'] = TokenType.Star,
         ['/'] = TokenType.Slash,
         ['%'] = TokenType.Modulo,
+        ['!'] = TokenType.Exclamation,
+        ['>'] = TokenType.GreaterThan,
+        ['<'] = TokenType.LessThan,
     };
 
     private static readonly Dictionary<string, TokenType> DoubleTokens = new() {
-        ["=="] = TokenType.DoubleEquals
-
+        ["=="] = TokenType.DoubleEquals,
+        ["!="] = TokenType.NotEquals,
+        [">="] = TokenType.GreaterThanEquals,
+        ["<="] = TokenType.LessThanEquals,
     };
 
     public Result<List<Token>> Tokenize() {
