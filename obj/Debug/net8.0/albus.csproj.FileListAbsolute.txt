@@ -1,0 +1,15 @@
+C:\Users\rxgqq\projects\albus\bin\Debug\net8.0\albus.exe
+C:\Users\rxgqq\projects\albus\bin\Debug\net8.0\albus.deps.json
+C:\Users\rxgqq\projects\albus\bin\Debug\net8.0\albus.runtimeconfig.json
+C:\Users\rxgqq\projects\albus\bin\Debug\net8.0\albus.dll
+C:\Users\rxgqq\projects\albus\bin\Debug\net8.0\albus.pdb
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.AssemblyInfoInputs.cache
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.AssemblyInfo.cs
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.csproj.CoreCompileInputs.cache
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.sourcelink.json
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.dll
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\refint\albus.dll
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.pdb
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\albus.genruntimeconfig.cache
+C:\Users\rxgqq\projects\albus\obj\Debug\net8.0\ref\albus.dll
