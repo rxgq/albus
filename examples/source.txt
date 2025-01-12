@@ -1,0 +1,6 @@
+let x = 10;
+
+if x == true then
+    return false
+endif
+
