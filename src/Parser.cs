@@ -32,6 +32,15 @@ public sealed class Parser(List<Token> tokens) {
         var identifier = Tokens[Current].Lexeme;
 
         if (!Expect(TokenType.Identifier, "identifier")) return ExprError();
+
+        string? type = null;
+        if (Match(TokenType.Colon)) {
+            Current++;
+
+            if (!Expect(TokenType.Identifier, "type")) return ExprError();
+            type = Tokens[Current].Lexeme;
+        }
+
         if (!Expect(TokenType.SingleEquals, "=")) return ExprError();
 
         var expr = ParsePrimaryExpr();
@@ -40,15 +49,16 @@ public sealed class Parser(List<Token> tokens) {
         if (!Expect(TokenType.SemiColon, ";")) return ExprError();
 
         var identExpr = new IdentifierExpr(identifier);
-        return new VariableDeclaration(identExpr, expr, true);
+        return new VariableDeclaration(identExpr, expr, type, true);
     }
 
     private Expression ParsePrimaryExpr() {
         var currentToken = Tokens[Current];
 
         Expression token = currentToken.Type switch {
-            TokenType.String => new LiteralExpr(currentToken.Lexeme),
-            _ => ExprError($"invalid expression") 
+            TokenType.String or TokenType.Integer or TokenType.Float or
+            TokenType.Char or TokenType.True or TokenType.False => new LiteralExpr(currentToken.Lexeme),
+            _ => ExprError($"invalid expression")
         }; 
 
         Current++;
@@ -56,12 +66,20 @@ public sealed class Parser(List<Token> tokens) {
     }
 
     private bool Expect(TokenType type, string value) {
-        if (Tokens[Current].Type == type) {
-            Current++;
-            return true;
+        if (IsLastToken() || Tokens[Current].Type != type) {
+            return Error($"expected '{value}'");
         }
 
-        return Error($"expected '{value}'");
+        Current++;
+        return true;
+    }
+
+    private bool Match(TokenType type) {
+        if (IsLastToken()) {
+            return false;
+        }
+
+        return Tokens[Current].Type == type;
     }
     
     private IdentifierExpr ExprError(string? message = null) {
@@ -75,7 +93,7 @@ public sealed class Parser(List<Token> tokens) {
     private bool Error(string message) {
         HasError = true;
 
-        var currentToken = Tokens[Current];
+        var currentToken = Tokens[Current - 1];
         Console.WriteLine($"parsing error: {message} on line {currentToken.Line}");
 
         return false;

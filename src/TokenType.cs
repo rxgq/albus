@@ -19,6 +19,7 @@ public enum TokenType {
     LessThan,
     GreaterThanEquals,
     LessThanEquals,
+    Colon,
 
     Integer,
     Float,

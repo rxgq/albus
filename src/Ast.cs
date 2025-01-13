@@ -6,9 +6,10 @@ public sealed class Ast {
 
 public abstract record Expression { }
 
-public sealed record VariableDeclaration(IdentifierExpr Identifier, Expression Expr, bool IsMutable) : Expression {
+public sealed record VariableDeclaration(IdentifierExpr Identifier, Expression Expr, string? Type, bool IsMutable) : Expression {
     public readonly IdentifierExpr Id = Identifier;
     public readonly Expression Expr = Expr;
+    public readonly string? Type = Type;
     public readonly bool IsMutable = IsMutable;
 }
 

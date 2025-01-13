@@ -5,6 +5,7 @@ public sealed class Lexer(string source, bool debug) {
     private int Current;
     private int CurrentLine = 1;
     private readonly bool IsDebug = debug;
+    public bool HasError = false;
 
     private readonly List<Token> Tokens = [];
 
@@ -22,6 +23,7 @@ public sealed class Lexer(string source, bool debug) {
 
     private static readonly Dictionary<char, TokenType> SingleTokens = new() {
         [';'] = TokenType.SemiColon,
+        [':'] = TokenType.Colon,
         ['='] = TokenType.SingleEquals,
         ['('] = TokenType.LeftParen,
         [')'] = TokenType.RightParen,
@@ -47,12 +49,15 @@ public sealed class Lexer(string source, bool debug) {
     public List<Token> Tokenize() {
         while (!IsEnd()) {
             while (!IsEnd() && (Source[Current] is ' ' or '\n' or '\r')) {
-                if (Source[Current] == '\n') CurrentLine++;
+                if (Source[Current] is '\n') CurrentLine++;
                 Current++;
             }
             if (IsEnd()) break;
 
             var token = ParseToken();
+            if (HasError) {
+                return Tokens;
+            }
 
             Tokens.Add(token);
             Current++;
@@ -109,6 +114,7 @@ public sealed class Lexer(string source, bool debug) {
             Current++;
 
         var lexeme = Source[start..Current];
+        Current--;
 
         if (Keywords.TryGetValue(lexeme, out var type)) {
             return NewToken(type, lexeme);
@@ -177,7 +183,7 @@ public sealed class Lexer(string source, bool debug) {
 
         var lexeme = Source[start..(Current + (IsEnd() ? 0 : 1))];
 
-        if (lexeme[^1] != '\"') {
+        if (lexeme[^1] != '\"' || lexeme.Length == 1) {
             return SyntaxError("Syntax Error: unterminated string literal");
         }
 
@@ -193,6 +199,7 @@ public sealed class Lexer(string source, bool debug) {
 
         Console.WriteLine($"{message} on line {CurrentLine}");
 
+        HasError = true;
         return NewToken(TokenType.BadToken, "");
     }
 

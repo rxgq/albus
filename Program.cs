@@ -27,9 +27,12 @@ internal class Program
         var source = File.ReadAllText(args[0]);
         var lexer = new Lexer(source, isDebug);
         var tokens = lexer.Tokenize();
+        if (lexer.HasError) {
+            return;
+        }
         
         var parser = new Parser(tokens);
         var ast = parser.ParseTokens();
-        
+
     }
 }
