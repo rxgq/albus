@@ -28,5 +28,8 @@ internal class Program
         var lexer = new Lexer(source, isDebug);
         var tokens = lexer.Tokenize();
         
+        var parser = new Parser(tokens);
+        var ast = parser.ParseTokens();
+        
     }
 }

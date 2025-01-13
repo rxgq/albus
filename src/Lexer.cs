@@ -15,6 +15,9 @@ public sealed class Lexer(string source, bool debug) {
         ["if"] = TokenType.If,
         ["true"] = TokenType.True,
         ["false"] = TokenType.False,
+        ["Endif"] = TokenType.Endif,
+        ["return"] = TokenType.Return,
+        ["void"] = TokenType.Void,
     };
 
     private static readonly Dictionary<char, TokenType> SingleTokens = new() {
@@ -38,7 +41,7 @@ public sealed class Lexer(string source, bool debug) {
         ["=="] = TokenType.DoubleEquals,
         ["!="] = TokenType.NotEquals,
         [">="] = TokenType.GreaterThanEquals,
-        ["<="] = TokenType.LessThanEquals,
+        ["<="] = TokenType.LessThanEquals, 
     };
 
     public List<Token> Tokenize() {
@@ -55,9 +58,9 @@ public sealed class Lexer(string source, bool debug) {
             Current++;
         }
 
-        if (IsDebug) LexerDebug();
-
         Tokens.Add(NewToken(TokenType.Eof, ""));
+
+        if (IsDebug) LexerDebug();
         return Tokens;
     }
 

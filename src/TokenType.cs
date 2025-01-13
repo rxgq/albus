@@ -19,17 +19,23 @@ public enum TokenType {
     LessThan,
     GreaterThanEquals,
     LessThanEquals,
-    Identifier,
+
     Integer,
     Float,
     Char,
     String,
+    Void,
     True,
     False,
+
+    Identifier,
     Let,
     Mut,
     While,
     If,
+    Endif,
+    Return,
+
     BadToken,
     Eof
 }
