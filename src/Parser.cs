@@ -23,14 +23,29 @@ public sealed class Parser(List<Token> tokens) {
     }
 
     private Expression ParseExpression() {
-        return ParseVariableDeclaration();
+        return Tokens[Current].Type switch {
+            TokenType.Let        => ParseVariableDeclaration(),
+            TokenType.Identifier => ParseAssignmentStatement(),
+            _ => ExprError()
+        }; 
+    }
+
+    private Expression ParseAssignmentStatement() {
+        var identifier = Tokens[Current].Lexeme;
+        if (!Expect(TokenType.Identifier, "identifier")) return ExprError();
+        if (!Expect(TokenType.SingleEquals, "=")) return ExprError();
+
+        var expr = ParsePrimaryExpr();
+        if (HasError) return ExprError();
+
+        var identExpr = new IdentifierExpr(identifier);
+        return new AssignmentStatement(identExpr, expr);
     }
 
     private Expression ParseVariableDeclaration() {
         if (!Expect(TokenType.Let, "let")) return ExprError();
         
         var identifier = Tokens[Current].Lexeme;
-
         if (!Expect(TokenType.Identifier, "identifier")) return ExprError();
 
         string? type = null;
