@@ -3,14 +3,14 @@ namespace albus.src;
 public sealed class Parser(List<Token> tokens, bool isDebug) {
     private readonly List<Token> Tokens = tokens;
     private int Current = 0;
-    private bool HasError = false;
-    private bool IsDebug = isDebug;
-
+    private readonly bool IsDebug = isDebug;
     private readonly Ast AST = new();
+
+    public bool HasError = false;
 
     public Ast ParseTokens() {
         while (!IsLastToken()) {
-            var expr = ParseExpression();
+            var expr = ParseStatement();
             AST.Body.Add(expr);
 
             if (HasError) {
@@ -24,12 +24,18 @@ public sealed class Parser(List<Token> tokens, bool isDebug) {
         return AST;
     }
 
-    private Expression ParseExpression() {
+    private Expression ParseStatement() {
         return Tokens[Current].Type switch {
             TokenType.Let        => ParseVariableDeclaration(),
             TokenType.Identifier => ParseAssignmentStatement(),
-            _ => ExprError()
-        }; 
+            _                    => ParseExpression()
+        };
+    }
+
+    private Expression ParseExpression() {
+        return Tokens[Current].Type switch {
+            _ => ParsePrimaryExpr()
+        };
     }
 
     private Expression ParseAssignmentStatement() {

@@ -2,10 +2,8 @@
 
 namespace albus;
 
-internal class Program 
-{
-    static void Main(string[] args) 
-    {
+internal class Program {
+    static void Main(string[] args) {
         if (args.Length < 1) {
             Console.WriteLine("expected source file path");
             return;
@@ -25,6 +23,7 @@ internal class Program
         }
 
         var source = File.ReadAllText(args[0]);
+
         var lexer = new Lexer(source, isDebug);
         var tokens = lexer.Tokenize();
         if (lexer.HasError) {
@@ -33,6 +32,9 @@ internal class Program
         
         var parser = new Parser(tokens, isDebug);
         var ast = parser.ParseTokens();
+        if (parser.HasError) {
+            return;
+        }
 
     }
 }
