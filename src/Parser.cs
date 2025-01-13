@@ -1,9 +1,10 @@
 namespace albus.src;
 
-public sealed class Parser(List<Token> tokens) {
+public sealed class Parser(List<Token> tokens, bool isDebug) {
     private readonly List<Token> Tokens = tokens;
     private int Current = 0;
     private bool HasError = false;
+    private bool IsDebug = isDebug;
 
     private readonly Ast AST = new();
 
@@ -19,6 +20,7 @@ public sealed class Parser(List<Token> tokens) {
             Current++;
         }
 
+        if (IsDebug) AstPrint();
         return AST;
     }
 
@@ -37,6 +39,8 @@ public sealed class Parser(List<Token> tokens) {
 
         var expr = ParsePrimaryExpr();
         if (HasError) return ExprError();
+
+        if (!Expect(TokenType.SemiColon, ";")) return ExprError();
 
         var identExpr = new IdentifierExpr(identifier);
         return new AssignmentStatement(identExpr, expr);
@@ -63,6 +67,8 @@ public sealed class Parser(List<Token> tokens) {
 
         if (!Expect(TokenType.SemiColon, ";")) return ExprError();
 
+        Current--;
+
         var identExpr = new IdentifierExpr(identifier);
         return new VariableDeclaration(identExpr, expr, type, true);
     }
@@ -73,6 +79,7 @@ public sealed class Parser(List<Token> tokens) {
         Expression token = currentToken.Type switch {
             TokenType.String or TokenType.Integer or TokenType.Float or
             TokenType.Char or TokenType.True or TokenType.False => new LiteralExpr(currentToken.Lexeme),
+            TokenType.Identifier => new IdentifierExpr(currentToken.Lexeme),
             _ => ExprError($"invalid expression")
         }; 
 
@@ -116,5 +123,44 @@ public sealed class Parser(List<Token> tokens) {
 
     private bool IsLastToken() {
         return Current >= Tokens.Count;
+    }
+
+    private void AstPrint() {
+        foreach (var expr in AST.Body) {
+            PrintExpression(expr, 0);
+        }
+    }
+
+    private static void PrintExpression(Expression expr, int indentLevel) {
+        var indent = new string(' ', indentLevel * 2);
+
+        switch (expr) {
+            case VariableDeclaration varDec:
+                Console.WriteLine($"{indent}VariableDeclaration:");
+                Console.WriteLine($"{indent}  Identifier: {varDec.Id.Name}");
+                if (varDec.Type is not null) Console.WriteLine($"{indent}  Type: {varDec.Type}");
+                Console.WriteLine($"{indent}  Value:");
+                PrintExpression(varDec.Expr, indentLevel + 1);
+                break;
+
+            case AssignmentStatement assignStmt:
+                Console.WriteLine($"{indent}AssignmentStatement:");
+                Console.WriteLine($"{indent}  Identifier: {assignStmt.Id.Name}");
+                Console.WriteLine($"{indent}  Value:");
+                PrintExpression(assignStmt.Expr, indentLevel + 1);
+                break;
+
+            case LiteralExpr literal:
+                Console.WriteLine($"{indent}LiteralExpr: {literal.Value}");
+                break;
+
+            case IdentifierExpr identifier:
+                Console.WriteLine($"{indent}IdentifierExpr: {identifier.Name}");
+                break;
+
+            default:
+                Console.WriteLine($"{indent}Unknown Expression Type");
+                break;
+        }
     }
 }

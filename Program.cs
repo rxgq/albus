@@ -31,7 +31,7 @@ internal class Program
             return;
         }
         
-        var parser = new Parser(tokens);
+        var parser = new Parser(tokens, isDebug);
         var ast = parser.ParseTokens();
 
     }
